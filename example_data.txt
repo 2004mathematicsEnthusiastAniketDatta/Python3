@@ -1,0 +1,6 @@
+Line 1: Hello World
+Line 2: Python Programming
+Line 3: Indentation is important
+Line 4: Generated line 1
+Line 5: Generated line 2
+Line 6: Generated line 3
