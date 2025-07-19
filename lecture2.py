@@ -2920,3 +2920,9 @@ def unreliable_service():
     print("Python data types enable powerful, flexible applications!")
     print("Each type serves specific industry use cases effectively.")
     print("="*60)
+
+
+# List - Ordered Mutable collection of items
+#  this may contain multiple data types
+
+
