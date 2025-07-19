@@ -170,3 +170,45 @@ if __name__ == "__main__":
             print("Demo complete! 🎉")
     except (EOFError, KeyboardInterrupt):
         print("\nDemo complete! 🎉")
+# What Happens in a REPL
+# Read Phase
+
+# Parse incomplete input (handle multi-line expressions)
+# Maintain parsing state across inputs
+# Handle syntax errors gracefully without crashing
+
+# Eval Phase
+# This is where it gets interesting - different languages handle this very differently:
+# Python's Approach
+# Python compiles each line to bytecode, then executes it in the existing namespace. It's not "just evaluating compiled code" - it's dynamically compiling and immediately executing while maintaining state.
+# python# Each line becomes bytecode:
+# >>> x = 5        # compile to STORE_NAME, execute
+# >>> x + 10       # compile to LOAD_NAME, BINARY_ADD, execute
+# Interpreted Languages (JavaScript, Ruby)
+# The REPL directly interprets AST nodes without a separate compilation step. Each expression is parsed into an AST and evaluated in the current environment.
+# Compiled Languages (Go, Rust)
+# These are trickier - some compile to temporary executables, others use interpretation mode:
+
+# Go's REPL (like gore) compiles fragments and links them
+# Rust REPLs often use LLVM JIT compilation
+
+# JIT-Compiled Languages (Java, C#)
+# Compile to intermediate code (bytecode/IL) then JIT compile to machine code on demand.
+# Key REPL Complexities
+# State Management
+# Variables, function definitions, and imports must persist across evaluations. The REPL maintains a global environment/namespace.
+# Error Recovery
+# Unlike batch compilation, REPLs must recover from errors gracefully and continue running. Syntax errors shouldn't crash the entire session.
+# Incremental Compilation
+# Some REPLs recompile only changed parts, maintaining compilation caches and dependency tracking.
+# Expression vs Statement Handling
+# REPLs need to distinguish between expressions (which return values to print) and statements (which don't).
+# Advanced Features
+
+# History and editing capabilities
+# Tab completion requiring symbol table access
+# Debugging integration
+# Module/package reloading
+# Multi-line input handling
+
+# So no, it's not just "evaluating compiled code" - it's a sophisticated system that needs to handle incremental parsing, compilation, execution, state management, and error recovery in an interactive environment. Each language's REPL reflects its underlying execution model.
