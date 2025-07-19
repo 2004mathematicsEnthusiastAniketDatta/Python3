@@ -4008,3 +4008,10 @@ img_buffer = img_processor.create_image_buffer(100, 100, 'RGB')
 img_processor.set_pixel(img_buffer, 50, 50, 100, (255, 0, 0))  # Red pixel
 pixel = img_processor.get_pixel(img_buffer, 50, 50, 100)
 print("Choose the right data type for your specific use case!")
+# Code travelling in Machine
+#  Electricity -> Electrons -> Dopants and SemiConductor Physics -> Transistors -> Logic Gates -> ALUs, Registers,Control Units -> Micro Code / Micro-Operations 
+# -> Instructions Set Architecture -> CPU Architecture (Pipelines , caches , branch Predictors) -> Machine Code -> Bootloader / Firmware (e.g. BIOS/UEFI) -> OperatingSystem Kernel
+# -> Device Drivers,Interrupt Handlers,Schedulers-> System Calls(SysCalls) -> C standard Library (libc) -> Language Runtimes (e.g. Java Virtual Machine, CPython (Compiled Python) , .NET CLR)
+# -> Language Standard Libraries -> Frameworks(e.g. Django , NextJs, Qt) -> App Logic -> High-Level Languages (e.g. Python, Java, C++) -> Application Code-> UI/CLI/API ->User Interaction 
+# or Client Requests 
+
