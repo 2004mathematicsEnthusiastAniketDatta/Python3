@@ -212,6 +212,8 @@ from collections import deque, defaultdict, Counter, OrderedDict, ChainMap
 from typing import List, Dict, Tuple, Optional, Union, Any, Callable
 from typing import TypeVar, Generic
 import hashlib
+import functools
+from string import Template
 
 # Compilers and Interpreters
 
@@ -4204,5 +4206,1285 @@ print("Choose the right data type for your specific use case!")
 # -> Device Drivers,Interrupt Handlers,Schedulers-> System Calls(SysCalls) -> C standard Library (libc) -> Language Runtimes (e.g. Java Virtual Machine, CPython (Compiled Python) , .NET CLR)
 # -> Language Standard Libraries -> Frameworks(e.g. Django , NextJs, Qt) -> App Logic -> High-Level Languages (e.g. Python, Java, C++) -> Application Code-> UI/CLI/API ->User Interaction 
 # or Client Requests 
+# EXTREME LOW-LEVEL VARIABLE IMPLEMENTATION WITH PIPELINING SIMULATION
+print("\n" + "="*80)
+print("EXTREME LOW-LEVEL VARIABLE IMPLEMENTATION WITH PIPELINING SIMULATION")
+print("="*80)
+
+# HARDWARE ABSTRACTION LAYER: TRANSISTOR-LEVEL SIMULATION
+class Transistor:
+    """Simulates a single transistor at the quantum level"""
+    
+    def __init__(self, transistor_id: str):
+        self.id = transistor_id
+        self.state = 0  # 0 = OFF, 1 = ON
+        self.voltage = 0.0
+        self.current = 0.0
+        self.temperature = 300.0  # Kelvin
+        self.electron_count = 0
+        
+    def switch(self, gate_voltage: float) -> int:
+        """Simulate transistor switching based on gate voltage"""
+        threshold = 0.7  # Threshold voltage in volts
+        if gate_voltage > threshold:
+            self.state = 1
+            self.voltage = 3.3  # VDD
+            self.current = 1e-6  # microamps
+            self.electron_count = int(1e12)  # electrons
+        else:
+            self.state = 0
+            self.voltage = 0.0
+            self.current = 0.0
+            self.electron_count = 0
+        return self.state
+
+class LogicGate:
+    """Simulates logic gates using transistors"""
+    
+    def __init__(self, gate_type: str):
+        self.gate_type = gate_type
+        self.transistors = []
+        self.setup_transistors()
+    
+    def setup_transistors(self):
+        """Setup transistors for different gate types"""
+        if self.gate_type == "NAND":
+            self.transistors = [Transistor(f"T{i}") for i in range(4)]
+        elif self.gate_type == "NOR":
+            self.transistors = [Transistor(f"T{i}") for i in range(4)]
+        elif self.gate_type == "NOT":
+            self.transistors = [Transistor(f"T{i}") for i in range(2)]
+    
+    def evaluate(self, inputs: list) -> int:
+        """Evaluate logic gate with transistor-level simulation"""
+        if self.gate_type == "NAND":
+            # NAND gate: output is 0 only when both inputs are 1
+            result = not (inputs[0] and inputs[1])
+            for i, transistor in enumerate(self.transistors):
+                transistor.switch(3.3 if (i < 2 and inputs[i]) else 0.0)
+            return int(result)
+        elif self.gate_type == "NOT":
+            result = not inputs[0]
+            self.transistors[0].switch(3.3 if inputs[0] else 0.0)
+            return int(result)
+        return 0
+
+# MEMORY CELL SIMULATION (SRAM/DRAM)
+class MemoryCell:
+    """Simulates a single memory cell at transistor level"""
+    
+    def __init__(self, address: int):
+        self.address = address
+        self.transistors = [Transistor(f"MC_{address}_T{i}") for i in range(6)]  # 6T SRAM
+        self.bit_value = 0
+        self.capacitance = 1e-15  # femtofarads
+        self.leakage_current = 1e-12  # picoamps
+        self.access_time = 1e-9  # nanoseconds
+        
+    def write_bit(self, value: int, voltage: float = 3.3):
+        """Write a bit to memory cell"""
+        self.bit_value = value
+        # Simulate charging/discharging storage capacitor
+        for transistor in self.transistors[:2]:  # Storage transistors
+            transistor.switch(voltage if value else 0.0)
+        
+    def read_bit(self) -> int:
+        """Read bit from memory cell"""
+        # Simulate sense amplifier reading
+        sense_voltage = 3.3 if self.bit_value else 0.0
+        return self.bit_value
+
+class MemoryBank:
+    """Simulates a bank of memory cells"""
+    
+    def __init__(self, size: int):
+        self.size = size
+        self.cells = [MemoryCell(i) for i in range(size)]
+        self.access_count = 0
+        
+    def write_byte(self, address: int, byte_value: int):
+        """Write 8 bits to memory"""
+        if address + 7 >= self.size:
+            raise MemoryError(f"Address {address} out of bounds")
+        
+        for i in range(8):
+            bit = (byte_value >> i) & 1
+            self.cells[address + i].write_bit(bit)
+        self.access_count += 1
+    
+    def read_byte(self, address: int) -> int:
+        """Read 8 bits from memory"""
+        if address + 7 >= self.size:
+            raise MemoryError(f"Address {address} out of bounds")
+        
+        byte_value = 0
+        for i in range(8):
+            bit = self.cells[address + i].read_bit()
+            byte_value |= (bit << i)
+        self.access_count += 1
+        return byte_value
+
+# CPU REGISTER SIMULATION
+class CPURegister:
+    """Simulates CPU register at gate level"""
+    
+    def __init__(self, name: str, width: int = 64):
+        self.name = name
+        self.width = width
+        self.flip_flops = []  # D-type flip-flops for storage
+        self.setup_flip_flops()
+        self.value = 0
+        
+    def setup_flip_flops(self):
+        """Setup flip-flops for register storage"""
+        for i in range(self.width):
+            self.flip_flops.append({
+                'nand_gates': [LogicGate("NAND") for _ in range(4)],
+                'stored_bit': 0
+            })
+    
+    def store(self, value: int):
+        """Store value in register"""
+        self.value = value & ((1 << self.width) - 1)  # Mask to register width
+        
+        # Simulate storing each bit in flip-flops
+        for i in range(self.width):
+            bit = (value >> i) & 1
+            self.flip_flops[i]['stored_bit'] = bit
+    
+    def load(self) -> int:
+        """Load value from register"""
+        value = 0
+        for i in range(self.width):
+            bit = self.flip_flops[i]['stored_bit']
+            value |= (bit << i)
+        return value
+
+# ALU (ARITHMETIC LOGIC UNIT) SIMULATION
+class ALU:
+    """Simulates ALU operations at gate level"""
+    
+    def __init__(self):
+        self.adder_gates = []
+        self.logic_gates = []
+        self.setup_gates()
+        
+    def setup_gates(self):
+        """Setup gates for ALU operations"""
+        # Full adders for 64-bit arithmetic
+        for i in range(64):
+            self.adder_gates.append({
+                'xor1': LogicGate("NAND"),  # Using NAND to build XOR
+                'xor2': LogicGate("NAND"),
+                'and1': LogicGate("NAND"),
+                'and2': LogicGate("NAND"),
+                'or1': LogicGate("NAND")
+            })
+    
+    def add(self, a: int, b: int) -> tuple:
+        """Simulate binary addition at gate level"""
+        result = 0
+        carry = 0
+        
+        for i in range(64):
+            bit_a = (a >> i) & 1
+            bit_b = (b >> i) & 1
+            
+            # Full adder logic using gates
+            sum_bit = bit_a ^ bit_b ^ carry
+            carry = (bit_a & bit_b) | (carry & (bit_a ^ bit_b))
+            
+            result |= (sum_bit << i)
+        
+        overflow = carry
+        return result & 0xFFFFFFFFFFFFFFFF, overflow
+    
+    def logical_and(self, a: int, b: int) -> int:
+        """Simulate bitwise AND"""
+        return a & b
+    
+    def logical_or(self, a: int, b: int) -> int:
+        """Simulate bitwise OR"""
+        return a | b
+
+# CPU PIPELINE SIMULATION
+class PipelineStage:
+    """Represents a single pipeline stage"""
+    
+    def __init__(self, name: str, latency: int):
+        self.name = name
+        self.latency = latency
+        self.instruction = None
+        self.cycle_count = 0
+        self.busy = False
+        
+    def accept_instruction(self, instruction: dict):
+        """Accept new instruction into pipeline stage"""
+        self.instruction = instruction
+        self.cycle_count = 0
+        self.busy = True
+        
+    def tick(self) -> bool:
+        """Advance one clock cycle"""
+        if self.busy:
+            self.cycle_count += 1
+            if self.cycle_count >= self.latency:
+                self.busy = False
+                return True  # Stage complete
+        return False
+
+class CPUPipeline:
+    """Simulates CPU pipeline with hazard detection"""
+    
+    def __init__(self):
+        self.stages = [
+            PipelineStage("FETCH", 1),
+            PipelineStage("DECODE", 1), 
+            PipelineStage("EXECUTE", 1),
+            PipelineStage("MEMORY", 1),
+            PipelineStage("WRITEBACK", 1)
+        ]
+        self.clock_cycle = 0
+        self.instructions_completed = 0
+        self.pipeline_stalls = 0
+        self.hazards_detected = 0
+        
+    def detect_hazards(self, new_instruction: dict) -> bool:
+        """Detect pipeline hazards"""
+        # Data hazard detection
+        if self.stages[2].instruction:  # EXECUTE stage
+            exec_dest = self.stages[2].instruction.get('dest_reg')
+            new_src = new_instruction.get('src_regs', [])
+            if exec_dest in new_src:
+                self.hazards_detected += 1
+                return True
+        return False
+    
+    def tick(self):
+        """Advance pipeline by one clock cycle"""
+        self.clock_cycle += 1
+        
+        # Process stages in reverse order (writeback to fetch)
+        for i in range(len(self.stages) - 1, -1, -1):
+            stage = self.stages[i]
+            if stage.tick():
+                if i == len(self.stages) - 1:  # Writeback complete
+                    self.instructions_completed += 1
+                elif i < len(self.stages) - 1:  # Forward to next stage
+                    next_stage = self.stages[i + 1]
+                    if not next_stage.busy:
+                        next_stage.accept_instruction(stage.instruction)
+                stage.instruction = None
+    
+    def issue_instruction(self, instruction: dict):
+        """Issue new instruction to pipeline"""
+        if self.detect_hazards(instruction):
+            self.pipeline_stalls += 1
+            return False
+        
+        if not self.stages[0].busy:
+            self.stages[0].accept_instruction(instruction)
+            return True
+        return False
+
+# VARIABLE IMPLEMENTATION AT HARDWARE LEVEL
+class HardwareVariable:
+    """Hardware-level variable implementation"""
+    
+    def __init__(self, name: str, var_type: str, memory_bank: MemoryBank):
+        self.name = name
+        self.var_type = var_type
+        self.memory_bank = memory_bank
+        self.base_address = self._allocate_memory()
+        self.size = self._get_type_size()
+        self.access_count = 0
+        self.cache_line = None
+        
+    def _allocate_memory(self) -> int:
+        """Allocate memory address for variable"""
+        # Simple allocation - in real systems this would be much more complex
+        return hash(self.name) % (self.memory_bank.size - 64)
+    
+    def _get_type_size(self) -> int:
+        """Get size in bytes for variable type"""
+        sizes = {
+            'int': 8, 'float': 8, 'double': 8,
+            'char': 1, 'bool': 1, 'pointer': 8
+        }
+        return sizes.get(self.var_type, 8)
+    
+    def store_value(self, value: int):
+        """Store value in memory with full hardware simulation"""
+        # Convert value to bytes
+        for i in range(self.size):
+            byte_val = (value >> (i * 8)) & 0xFF
+            self.memory_bank.write_byte(self.base_address + i, byte_val)
+        self.access_count += 1
+        
+    def load_value(self) -> int:
+        """Load value from memory"""
+        value = 0
+        for i in range(self.size):
+            byte_val = self.memory_bank.read_byte(self.base_address + i)
+            value |= (byte_val << (i * 8))
+        self.access_count += 1
+        return value
+
+# CACHE SIMULATION
+class CacheEntry:
+    """Represents a cache line entry"""
+    
+    def __init__(self):
+        self.valid = False
+        self.dirty = False
+        self.tag = 0
+        self.data = bytearray(64)  # 64-byte cache line
+        self.access_count = 0
+        self.last_access_cycle = 0
+
+class Cache:
+    """Simulates CPU cache hierarchy"""
+    
+    def __init__(self, level: int, size: int, associativity: int, line_size: int):
+        self.level = level
+        self.size = size
+        self.associativity = associativity
+        self.line_size = line_size
+        self.num_sets = size // (associativity * line_size)
+        self.cache_lines = [[CacheEntry() for _ in range(associativity)] 
+                           for _ in range(self.num_sets)]
+        self.hits = 0
+        self.misses = 0
+        self.current_cycle = 0
+        
+    def access(self, address: int) -> tuple:
+        """Access cache with address"""
+        self.current_cycle += 1
+        
+        # Extract cache address components
+        offset = address % self.line_size
+        set_index = (address // self.line_size) % self.num_sets
+        tag = address // (self.line_size * self.num_sets)
+        
+        # Check for hit in set
+        cache_set = self.cache_lines[set_index]
+        for entry in cache_set:
+            if entry.valid and entry.tag == tag:
+                entry.access_count += 1
+                entry.last_access_cycle = self.current_cycle
+                self.hits += 1
+                return True, 1  # Hit, 1 cycle
+        
+        # Cache miss - find LRU entry to replace
+        lru_entry = min(cache_set, key=lambda e: e.last_access_cycle)
+        lru_entry.valid = True
+        lru_entry.tag = tag
+        lru_entry.access_count += 1
+        lru_entry.last_access_cycle = self.current_cycle
+        self.misses += 1
+        
+        # L1 miss penalty
+        penalty = 10 if self.level == 1 else 100 if self.level == 2 else 300
+        return False, penalty
+
+# VARIABLE LIFECYCLE SIMULATION
+class VariableLifecycleSimulator:
+    """Simulates complete variable lifecycle from creation to destruction"""
+    
+    def __init__(self):
+        self.memory_bank = MemoryBank(1024 * 1024)  # 1MB memory
+        self.l1_cache = Cache(1, 32768, 8, 64)  # 32KB L1
+        self.l2_cache = Cache(2, 262144, 8, 64)  # 256KB L2
+        self.l3_cache = Cache(3, 8388608, 16, 64)  # 8MB L3
+        self.cpu_pipeline = CPUPipeline()
+        self.registers = {
+            'RAX': CPURegister('RAX'),
+            'RBX': CPURegister('RBX'),
+            'RCX': CPURegister('RCX'),
+            'RDX': CPURegister('RDX')
+        }
+        self.alu = ALU()
+        self.variables = {}
+        self.total_cycles = 0
+        
+    def create_variable(self, name: str, var_type: str, initial_value: int = 0):
+        """Create variable with full hardware simulation"""
+        print(f"\n--- Creating variable '{name}' of type '{var_type}' ---")
+        
+        # 1. Memory allocation
+        var = HardwareVariable(name, var_type, self.memory_bank)
+        self.variables[name] = var
+        print(f"Memory allocated at address: 0x{var.base_address:08X}")
+        
+        # 2. Store initial value
+        var.store_value(initial_value)
+        print(f"Initial value {initial_value} stored")
+        
+        # 3. Simulate assembly instructions
+        instructions = [
+            {'type': 'LOAD_IMM', 'dest_reg': 'RAX', 'value': initial_value},
+            {'type': 'STORE', 'src_reg': 'RAX', 'address': var.base_address},
+        ]
+        
+        for instruction in instructions:
+            self.execute_instruction(instruction)
+        
+        return var
+    
+    def execute_instruction(self, instruction: dict):
+        """Execute instruction through pipeline"""
+        cycles_before = self.cpu_pipeline.clock_cycle
+        
+        # Try to issue instruction
+        while not self.cpu_pipeline.issue_instruction(instruction):
+            self.cpu_pipeline.tick()  # Stall if hazard detected
+        
+        # Execute instruction
+        if instruction['type'] == 'LOAD_IMM':
+            reg_name = instruction['dest_reg']
+            value = instruction['value']
+            self.registers[reg_name].store(value)
+            
+        elif instruction['type'] == 'STORE':
+            src_reg = instruction['src_reg']
+            address = instruction['address']
+            value = self.registers[src_reg].load()
+            
+            # Simulate cache hierarchy
+            hit, cycles = self.l1_cache.access(address)
+            if not hit:
+                hit, cycles = self.l2_cache.access(address)
+                if not hit:
+                    hit, cycles = self.l3_cache.access(address)
+            
+            self.total_cycles += cycles
+        
+        cycles_after = self.cpu_pipeline.clock_cycle
+        print(f"Instruction executed in {cycles_after - cycles_before} cycles")
+    
+    def access_variable(self, name: str, operation: str, value: int = None):
+        """Access variable with full pipeline and cache simulation"""
+        if name not in self.variables:
+            raise NameError(f"Variable '{name}' not found")
+        
+        var = self.variables[name]
+        print(f"\n--- {operation.upper()} operation on variable '{name}' ---")
+        
+        if operation == 'read':
+            # Simulate LOAD instruction
+            instruction = {
+                'type': 'LOAD',
+                'dest_reg': 'RAX',
+                'address': var.base_address,
+                'src_regs': []
+            }
+            self.execute_instruction(instruction)
+            
+            # Simulate cache access
+            hit, cycles = self.l1_cache.access(var.base_address)
+            cache_level = "L1"
+            if not hit:
+                hit, cycles = self.l2_cache.access(var.base_address)
+                cache_level = "L2"
+                if not hit:
+                    hit, cycles = self.l3_cache.access(var.base_address)
+                    cache_level = "L3"
+            
+            loaded_value = var.load_value()
+            print(f"Value {loaded_value} loaded from {cache_level} cache in {cycles} cycles")
+            return loaded_value
+            
+        elif operation == 'write':
+            if value is None:
+                raise ValueError("Value required for write operation")
+            
+            # Simulate STORE instruction
+            self.registers['RAX'].store(value)
+            instruction = {
+                'type': 'STORE',
+                'src_reg': 'RAX',
+                'address': var.base_address,
+                'src_regs': ['RAX']
+            }
+            self.execute_instruction(instruction)
+            
+            var.store_value(value)
+            print(f"Value {value} stored to memory")
+            
+        elif operation == 'arithmetic':
+            # Simulate arithmetic operation
+            old_value = var.load_value()
+            self.registers['RAX'].store(old_value)
+            self.registers['RBX'].store(value)
+            
+            # ALU operation
+            result, overflow = self.alu.add(old_value, value)
+            
+            instruction = {
+                'type': 'ADD',
+                'dest_reg': 'RAX',
+                'src_regs': ['RAX', 'RBX']
+            }
+            self.execute_instruction(instruction)
+            
+            var.store_value(result)
+            print(f"Arithmetic: {old_value} + {value} = {result}")
+            if overflow:
+                print("Overflow detected!")
+            
+            return result
+    
+    def print_performance_stats(self):
+        """Print detailed performance statistics"""
+        print(f"\n{'='*60}")
+        print("HARDWARE PERFORMANCE STATISTICS")
+        print(f"{'='*60}")
+        
+        print(f"Total CPU cycles: {self.total_cycles}")
+        print(f"Instructions completed: {self.cpu_pipeline.instructions_completed}")
+        print(f"Pipeline stalls: {self.cpu_pipeline.pipeline_stalls}")
+        print(f"Hazards detected: {self.cpu_pipeline.hazards_detected}")
+        
+        # Cache statistics
+        for cache, name in [(self.l1_cache, 'L1'), (self.l2_cache, 'L2'), (self.l3_cache, 'L3')]:
+            hit_rate = cache.hits / (cache.hits + cache.misses) * 100 if (cache.hits + cache.misses) > 0 else 0
+            print(f"{name} Cache - Hits: {cache.hits}, Misses: {cache.misses}, Hit Rate: {hit_rate:.2f}%")
+        
+        # Memory statistics
+        print(f"Memory accesses: {self.memory_bank.access_count}")
+        
+        # Variable statistics
+        print(f"\nVariable access statistics:")
+        for name, var in self.variables.items():
+            print(f"  {name}: {var.access_count} accesses")
+
+# COMPREHENSIVE SIMULATION EXAMPLE
+def run_comprehensive_simulation():
+    """Run comprehensive hardware-level variable simulation"""
+    print("STARTING COMPREHENSIVE HARDWARE-LEVEL VARIABLE SIMULATION")
+    print("="*80)
+    
+    simulator = VariableLifecycleSimulator()
+    
+    # Create variables
+    x = simulator.create_variable('x', 'int', 42)
+    y = simulator.create_variable('y', 'int', 100)
+    z = simulator.create_variable('z', 'int', 0)
+    
+    # Simulate Python operations: z = x + y
+    print(f"\n{'='*50}")
+    print("SIMULATING: z = x + y")
+    print(f"{'='*50}")
+    
+    x_val = simulator.access_variable('x', 'read')
+    y_val = simulator.access_variable('y', 'read')
+    z_val = simulator.access_variable('z', 'arithmetic', y_val)  # z = z + y
+    simulator.access_variable('z', 'write', x_val + y_val)  # z = x + y
+    
+    # Multiple accesses to test cache behavior
+    print(f"\n{'='*50}")
+    print("TESTING CACHE BEHAVIOR WITH REPEATED ACCESSES")
+    print(f"{'='*50}")
+    
+    for i in range(5):
+        simulator.access_variable('x', 'read')
+        simulator.access_variable('y', 'read')
+    
+    # Print final statistics
+    simulator.print_performance_stats()
+    
+    # Transistor-level analysis
+    print(f"\n{'='*50}")
+    print("TRANSISTOR-LEVEL ANALYSIS")
+    print(f"{'='*50}")
+    
+    total_transistors = 0
+    for var_name, var in simulator.variables.items():
+        # Estimate transistors used (very simplified)
+        memory_transistors = var.size * 8 * 6  # 6T SRAM per bit
+        total_transistors += memory_transistors
+        print(f"Variable '{var_name}': ~{memory_transistors} transistors")
+    
+    cache_transistors = (simulator.l1_cache.size + simulator.l2_cache.size + 
+                        simulator.l3_cache.size) * 6  # 6T SRAM
+    register_transistors = len(simulator.registers) * 64 * 20  # ~20 transistors per bit
+    
+    total_transistors += cache_transistors + register_transistors
+    
+    print(f"Cache hierarchy: ~{cache_transistors:,} transistors")
+    print(f"Registers: ~{register_transistors:,} transistors")
+    print(f"Total estimated transistors: ~{total_transistors:,}")
+    
+    print(f"\n{'='*80}")
+    print("SIMULATION COMPLETE")
+    print(f"{'='*80}")
+
+# Run the comprehensive simulation
+run_comprehensive_simulation()
+
+# QUANTUM-LEVEL ELECTRON FLOW SIMULATION
+print("\n" + "="*80)
+print("QUANTUM-LEVEL ELECTRON FLOW SIMULATION")
+print("="*80)
+
+class ElectronSimulator:
+    """Simulates electron flow in semiconductor devices"""
+    
+    def __init__(self):
+        self.electrons = []
+        self.holes = []
+        self.electric_field = 0.0
+        self.temperature = 300.0  # Kelvin
+        self.doping_concentration = 1e16  # atoms/cm³
+        
+    def inject_electrons(self, count: int, energy: float):
+        """Inject electrons into semiconductor"""
+        for i in range(count):
+            electron = {
+                'id': i,
+                'position': [0.0, 0.0, 0.0],
+                'velocity': [0.0, 0.0, 0.0],
+                'energy': energy,
+                'spin': 1 if i % 2 else -1
+            }
+            self.electrons.append(electron)
+    
+    def apply_electric_field(self, field_strength: float):
+        """Apply electric field to move electrons"""
+        self.electric_field = field_strength
+        electron_charge = -1.602e-19  # Coulombs
+        electron_mass = 9.109e-31  # kg
+        
+        for electron in self.electrons:
+            force = electron_charge * field_strength
+            acceleration = force / electron_mass
+            electron['velocity'][0] += acceleration * 1e-12  # femtosecond timestep
+    
+    def simulate_current_flow(self) -> float:
+        """Calculate current from electron movement"""
+        total_charge = len(self.electrons) * 1.602e-19
+        drift_velocity = sum(e['velocity'][0] for e in self.electrons) / len(self.electrons)
+        area = 1e-12  # m² (very small cross-section)
+        current = total_charge * drift_velocity / area
+        return current
+
+# Demonstrate quantum-level variable storage
+def demonstrate_quantum_storage():
+    """Demonstrate how variables exist at quantum level"""
+    print("\nDemonstrating quantum-level variable storage...")
+    
+    simulator = ElectronSimulator()
+    
+    # Variable value 42 (binary: 101010)
+    binary_42 = bin(42)[2:].zfill(8)  # 00101010
+    print(f"Storing value 42 (binary: {binary_42})")
+    
+    for i, bit in enumerate(binary_42):
+        if bit == '1':
+            # High voltage state - inject electrons
+            simulator.inject_electrons(1000, 3.3)  # 3.3V
+            simulator.apply_electric_field(1e5)  # V/m
+            current = simulator.simulate_current_flow()
+            print(f"Bit {i}: HIGH (1) - Current: {current:.2e} A")
+        else:
+            # Low voltage state - minimal electrons
+            simulator.inject_electrons(10, 0.1)  # 0.1V
+            simulator.apply_electric_field(1e3)  # V/m
+            current = simulator.simulate_current_flow()
+            print(f"Bit {i}: LOW (0) - Current: {current:.2e} A")
+
+demonstrate_quantum_storage()
+
+print("\n" + "="*80)
+print("VARIABLE JOURNEY: FROM QUANTUM TO HIGH-LEVEL")
+print("="*80)
+print("1. Quantum Level: Electron/hole pairs in semiconductor")
+print("2. Physics Level: Electric fields control electron flow")  
+print("3. Device Level: Transistors switch based on gate voltage")
+print("4. Logic Level: Gates perform boolean operations")
+print("5. Register Level: Flip-flops store bits")
+print("6. Memory Level: Arrays of cells store bytes")
+print("7. Cache Level: Fast memory hierarchy")
+print("8. Pipeline Level: Instruction execution stages")
+print("9. ISA Level: Machine instructions")
+print("10. OS Level: Virtual memory management")
+print("11. Runtime Level: Python interpreter")
+print("12. Language Level: Python variables")
+print("="*80)
+# PYTHON MACRO EQUIVALENTS - COMPREHENSIVE GUIDE
+print("\n" + "="*60)
+print("PYTHON MACRO EQUIVALENTS - COMPREHENSIVE GUIDE")
+print("="*60)
+
+# 1. CONSTANTS (Simplest macro replacement)
+print("\n1. CONSTANTS - Replacing #define macros:")
+print("="*45)
+
+# C/C++ macro: #define PI 3.14159
+PI = 3.14159
+MAX_SIZE = 1000
+DEBUG = True
+
+print(f"PI: {PI}")
+print(f"MAX_SIZE: {MAX_SIZE}")
+print(f"DEBUG: {DEBUG}")
+
+# Using typing.Final for true constants (Python 3.8+)
+
+API_VERSION: Final = "1.0.0"
+MAX_CONNECTIONS: Final = 100
+
+# 2. FUNCTIONS (Replacing function-like macros)
+print("\n2. FUNCTIONS - Replacing function-like macros:")
+print("="*48)
+
+# C/C++ macro: #define SQUARE(x) ((x) * (x))
+def SQUARE(x):
+    return x * x
+
+# C/C++ macro: #define MAX(a, b) ((a) > (b) ? (a) : (b))
+def MAX(a, b):
+    return a if a > b else b
+
+# C/C++ macro: #define MIN(a, b) ((a) < (b) ? (a) : (b))
+def MIN(a, b):
+    return a if a < b else b
+
+print(f"SQUARE(5): {SQUARE(5)}")
+print(f"MAX(10, 20): {MAX(10, 20)}")
+print(f"MIN(10, 20): {MIN(10, 20)}")
+
+# 3. LAMBDA FUNCTIONS (Inline macro-like behavior)
+print("\n3. LAMBDA FUNCTIONS - Inline macro-like behavior:")
+print("="*52)
+
+# Equivalent to simple macros
+ABS = lambda x: x if x >= 0 else -x
+IS_EVEN = lambda x: x % 2 == 0
+IS_ODD = lambda x: x % 2 != 0
+
+print(f"ABS(-5): {ABS(-5)}")
+print(f"IS_EVEN(4): {IS_EVEN(4)}")
+print(f"IS_ODD(5): {IS_ODD(5)}")
+
+# 4. DECORATORS (Advanced macro-like functionality)
+print("\n4. DECORATORS - Advanced macro-like functionality:")
+print("="*51)
+
+
+# Timing decorator (like a profiling macro)
+def timer_macro(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = func(*args, **kwargs)
+        end = time.time()
+        print(f"{func.__name__} took {end - start:.4f} seconds")
+        return result
+    return wrapper
+
+# Debug decorator (like DEBUG macro)
+def debug_macro(func):
+    @functools.wraps(func)
+    def wrapper(*args, **kwargs):
+        if DEBUG:
+            print(f"Calling {func.__name__} with args={args}, kwargs={kwargs}")
+        result = func(*args, **kwargs)
+        if DEBUG:
+            print(f"{func.__name__} returned {result}")
+        return result
+    return wrapper
+
+@timer_macro
+@debug_macro
+def calculate_factorial(n):
+    if n <= 1:
+        return 1
+    return n * calculate_factorial(n - 1)
+
+result = calculate_factorial(5)
+print(f"Factorial result: {result}")
+
+# 5. CLASS-BASED MACROS (Using __call__)
+print("\n5. CLASS-BASED MACROS - Using __call__:")
+print("="*42)
+
+class AssertMacro:
+    def __init__(self, condition, message="Assertion failed"):
+        self.condition = condition
+        self.message = message
+    
+    def __call__(self, *args):
+        if not self.condition(*args):
+            raise AssertionError(f"{self.message}: {args}")
+
+# Usage like a macro
+ASSERT_POSITIVE = AssertMacro(lambda x: x > 0, "Value must be positive")
+ASSERT_RANGE = AssertMacro(lambda x, min_val, max_val: min_val <= x <= max_val, "Value out of range")
+
+try:
+    ASSERT_POSITIVE(5)
+    print("Positive assertion passed")
+    
+    ASSERT_RANGE(15, 10, 20)
+    print("Range assertion passed")
+    
+    ASSERT_POSITIVE(-5)  # This will raise an error
+except AssertionError as e:
+    print(f"Assertion error: {e}")
+
+# 6. CONTEXT MANAGERS (Resource management macros)
+print("\n6. CONTEXT MANAGERS - Resource management macros:")
+print("="*54)
+
+
+@contextmanager
+def timing_context(operation_name):
+    """Context manager that acts like a timing macro"""
+    print(f"Starting {operation_name}")
+    start = time.time()
+    try:
+        yield
+    finally:
+        end = time.time()
+        print(f"{operation_name} completed in {end - start:.4f} seconds")
+
+@contextmanager
+def debug_context(operation_name):
+    """Context manager for debug operations"""
+    if DEBUG:
+        print(f"DEBUG: Entering {operation_name}")
+    try:
+        yield
+    finally:
+        if DEBUG:
+            print(f"DEBUG: Exiting {operation_name}")
+
+# Usage
+with timing_context("Database Operation"):
+    with debug_context("Query Execution"):
+        time.sleep(0.1)  # Simulate database operation
+        result = "Query completed"
+
+# 7. METACLASSES (Advanced macro-like class manipulation)
+print("\n7. METACLASSES - Advanced macro-like class manipulation:")
+print("="*58)
+
+class AutoPropertyMeta(type):
+    """Metaclass that automatically creates properties for attributes"""
+    
+    def __new__(mcs, name, bases, namespace):
+        # Find attributes that should become properties
+        auto_props = namespace.get('__auto_properties__', [])
+        
+        for prop_name in auto_props:
+            private_name = f'_{prop_name}'
+            
+            def make_property(attr_name, private_attr):
+                def getter(self):
+                    return getattr(self, private_attr, None)
+                
+                def setter(self, value):
+                    if DEBUG:
+                        print(f"Setting {attr_name} = {value}")
+                    setattr(self, private_attr, value)
+                
+                return property(getter, setter)
+            
+            namespace[prop_name] = make_property(prop_name, private_name)
+        
+        return super().__new__(mcs, name, bases, namespace)
+
+class Person(metaclass=AutoPropertyMeta):
+    __auto_properties__ = ['name', 'age']
+    
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+person = Person("Alice", 30)
+print(f"Person: {person.name}, {person.age}")
+person.age = 31  # This will trigger debug output if DEBUG is True
+
+# 8. TEMPLATE STRINGS (String substitution macros)
+print("\n8. TEMPLATE STRINGS - String substitution macros:")
+print("="*52)
+
+
+# Template-based macro system
+class MacroTemplate:
+    def __init__(self):
+        self.templates = {}
+    
+    def define(self, name, template_str):
+        """Define a macro template"""
+        self.templates[name] = Template(template_str)
+    
+    def expand(self, name, **kwargs):
+        """Expand a macro with substitutions"""
+        if name not in self.templates:
+            raise ValueError(f"Macro '{name}' not defined")
+        return self.templates[name].substitute(**kwargs)
+
+macro_system = MacroTemplate()
+
+# Define macros
+macro_system.define('PRINT_VAR', 'print(f"${var_name} = {${var_name}}")')
+macro_system.define('ASSERT_TYPE', 'assert isinstance(${var}, ${type_name}), f"${var} must be ${type_name}"')
+
+# Expand macros
+x = 42
+exec(macro_system.expand('PRINT_VAR', var_name='x'))
+
+y = "hello"
+exec(macro_system.expand('ASSERT_TYPE', var='y', type_name='str'))
+
+# 9. FUNCTION FACTORIES (Dynamic macro creation)
+print("\n9. FUNCTION FACTORIES - Dynamic macro creation:")
+print("="*50)
+
+def create_validator_macro(validation_func, error_message):
+    """Factory function that creates validation macros"""
+    def validator(value):
+        if not validation_func(value):
+            raise ValueError(f"{error_message}: {value}")
+        return value
+    return validator
+
+def create_converter_macro(converter_func, default_value=None):
+    """Factory function that creates conversion macros"""
+    def converter(value):
+        try:
+            return converter_func(value)
+        except (ValueError, TypeError):
+            if default_value is not None:
+                return default_value
+            raise
+    return converter
+
+# Create specific macros
+VALIDATE_POSITIVE = create_validator_macro(lambda x: x > 0, "Value must be positive")
+VALIDATE_EMAIL = create_validator_macro(lambda x: '@' in str(x), "Invalid email format")
+
+SAFE_INT = create_converter_macro(int, 0)
+SAFE_FLOAT = create_converter_macro(float, 0.0)
+
+# Usage
+try:
+    VALIDATE_POSITIVE(10)
+    print("Positive validation passed")
+    
+    VALIDATE_EMAIL("user@example.com")
+    print("Email validation passed")
+    
+    print(f"SAFE_INT('123'): {SAFE_INT('123')}")
+    print(f"SAFE_INT('invalid'): {SAFE_INT('invalid')}")
+    
+except ValueError as e:
+    print(f"Validation error: {e}")
+
+# 10. OPERATOR OVERLOADING (Macro-like operators)
+print("\n10. OPERATOR OVERLOADING - Macro-like operators:")
+print("="*52)
+
+class MacroValue:
+    """Class that provides macro-like operations through operator overloading"""
+    
+    def __init__(self, value):
+        self.value = value
+    
+    def __add__(self, other):
+        if DEBUG:
+            print(f"ADD: {self.value} + {other}")
+        return MacroValue(self.value + other)
+    
+    def __mul__(self, other):
+        if DEBUG:
+            print(f"MUL: {self.value} * {other}")
+        return MacroValue(self.value * other)
+    
+    def __rshift__(self, other):
+        """Custom operator for macro-like operations"""
+        if DEBUG:
+            print(f"TRANSFORM: {self.value} >> {other}")
+        return MacroValue(other(self.value))
+    
+    def __str__(self):
+        return str(self.value)
+
+# Usage
+m = MacroValue(5)
+result = m + 3
+print(f"MacroValue result: {result}")
+
+# Custom transform operation
+result2 = m >> (lambda x: x ** 2)
+print(f"Transform result: {result2}")
+
+# 11. EXEC/EVAL BASED MACROS (Code generation)
+print("\n11. EXEC/EVAL BASED MACROS - Code generation:")
+print("="*50)
+
+class CodeMacro:
+    """Macro system using code generation"""
+    
+    def __init__(self):
+        self.macros = {}
+    
+    def define_macro(self, name, template, *param_names):
+        """Define a code-generating macro"""
+        self.macros[name] = (template, param_names)
+    
+    def expand_macro(self, name, *args, **kwargs):
+        """Expand macro to executable code"""
+        if name not in self.macros:
+            raise ValueError(f"Macro '{name}' not defined")
+        
+        template, param_names = self.macros[name]
+        
+        # Create substitution dictionary
+        substitutions = {}
+        for i, param in enumerate(param_names):
+            if i < len(args):
+                substitutions[param] = repr(args[i])
+        substitutions.update({k: repr(v) for k, v in kwargs.items()})
+        
+        # Generate and return code
+        return template.format(**substitutions)
+    
+    def execute_macro(self, name, *args, **kwargs):
+        """Execute macro directly"""
+        code = self.expand_macro(name, *args, **kwargs)
+        exec(code)
+
+code_macro = CodeMacro()
+
+# Define macros
+code_macro.define_macro(
+    'FOR_EACH',
+    'for {item} in {iterable}:\n    print(f"Processing: {{{item}}}")',
+    'item', 'iterable'
+)
+
+code_macro.define_macro(
+    'TIMER_BLOCK',
+    '''
+start_time = time.time()
+{code}
+end_time = time.time()
+print(f"Block executed in {{end_time - start_time:.4f}} seconds")
+''',
+    'code'
+)
+
+# Execute macros
+print("\nExecuting FOR_EACH macro:")
+code_macro.execute_macro('FOR_EACH', 'item', [1, 2, 3, 4])
+
+# 12. PROPERTY-BASED MACROS (Computed properties)
+print("\n12. PROPERTY-BASED MACROS - Computed properties:")
+print("="*53)
+
+class MacroProperties:
+    """Class demonstrating property-based macro-like behavior"""
+    
+    def __init__(self, x, y):
+        self._x = x
+        self._y = y
+    
+    @property
+    def DISTANCE_FROM_ORIGIN(self):
+        """Macro-like computed property"""
+        return (self._x ** 2 + self._y ** 2) ** 0.5
+    
+    @property
+    def QUADRANT(self):
+        """Macro-like property for quadrant detection"""
+        if self._x > 0 and self._y > 0:
+            return "I"
+        elif self._x < 0 and self._y > 0:
+            return "II"
+        elif self._x < 0 and self._y < 0:
+            return "III"
+        else:
+            return "IV"
+    
+    @property
+    def IS_ON_AXIS(self):
+        """Macro-like boolean property"""
+        return self._x == 0 or self._y == 0
+
+point = MacroProperties(3, 4)
+print(f"Distance from origin: {point.DISTANCE_FROM_ORIGIN}")
+print(f"Quadrant: {point.QUADRANT}")
+print(f"Is on axis: {point.IS_ON_AXIS}")
+
+# 13. COMPREHENSIVE MACRO SYSTEM
+print("\n13. COMPREHENSIVE MACRO SYSTEM:")
+print("="*35)
+
+class PythonMacroSystem:
+    """Comprehensive macro system for Python"""
+    
+    def __init__(self):
+        self.constants = {}
+        self.functions = {}
+        self.templates = {}
+        self.debug = True
+    
+    def define_constant(self, name, value):
+        """Define a constant macro"""
+        self.constants[name] = value
+        if self.debug:
+            print(f"Defined constant: {name} = {value}")
+    
+    def define_function(self, name, func):
+        """Define a function macro"""
+        self.functions[name] = func
+        if self.debug:
+            print(f"Defined function macro: {name}")
+    
+    def define_template(self, name, template):
+        """Define a template macro"""
+        self.templates[name] = template
+        if self.debug:
+            print(f"Defined template macro: {name}")
+    
+    def get_constant(self, name):
+        """Get constant value"""
+        return self.constants.get(name, f"UNDEFINED_CONSTANT_{name}")
+    
+    def call_function(self, name, *args, **kwargs):
+        """Call function macro"""
+        if name in self.functions:
+            return self.functions[name](*args, **kwargs)
+        raise ValueError(f"Function macro '{name}' not defined")
+    
+    def expand_template(self, name, **kwargs):
+        """Expand template macro"""
+        if name in self.templates:
+            return self.templates[name].format(**kwargs)
+        raise ValueError(f"Template macro '{name}' not defined")
+
+# Example usage of comprehensive macro system
+macro_sys = PythonMacroSystem()
+
+# Define various macro types
+macro_sys.define_constant('VERSION', '2.0.0')
+macro_sys.define_constant('MAX_RETRIES', 3)
+
+macro_sys.define_function('CLAMP', lambda x, min_val, max_val: max(min_val, min(x, max_val)))
+macro_sys.define_function('LERP', lambda a, b, t: a + (b - a) * t)
+
+macro_sys.define_template('LOG_ERROR', 'print(f"ERROR [{timestamp}]: {message}")')
+macro_sys.define_template('VALIDATE_PARAM', 'if not {condition}: raise ValueError("{error_msg}")')
+
+# Use the macro system
+print(f"\nUsing macro system:")
+print(f"Version: {macro_sys.get_constant('VERSION')}")
+print(f"Clamped value: {macro_sys.call_function('CLAMP', 15, 0, 10)}")
+print(f"Interpolated value: {macro_sys.call_function('LERP', 0, 100, 0.5)}")
+
+# Generate code from templates
+error_log = macro_sys.expand_template('LOG_ERROR', timestamp='2023-12-01', message='File not found')
+print(f"Generated code: {error_log}")
+
+# 14. PRACTICAL MACRO EXAMPLES
+print("\n14. PRACTICAL MACRO EXAMPLES:")
+print("="*33)
+
+# Singleton macro
+def singleton(cls):
+    """Decorator that creates a singleton class"""
+    instances = {}
+    def get_instance(*args, **kwargs):
+        if cls not in instances:
+            instances[cls] = cls(*args, **kwargs)
+        return instances[cls]
+    return get_instance
+
+@singleton
+class DatabaseConnection:
+    def __init__(self):
+        print("Creating database connection")
+        self.connected = True
+
+# Property validation macro
+def validated_property(validator, error_msg="Invalid value"):
+    """Decorator that creates a validated property"""
+    def decorator(func):
+        name = func.__name__
+        private_name = f'_{name}'
+        
+        def getter(self):
+            return getattr(self, private_name, None)
+        
+        def setter(self, value):
+            if not validator(value):
+                raise ValueError(f"{error_msg}: {value}")
+            setattr(self, private_name, value)
+        
+        return property(getter, setter)
+    return decorator
+
+class Person:
+    @validated_property(lambda x: isinstance(x, str) and len(x) > 0, "Name must be non-empty string")
+    def name(self): pass
+    
+    @validated_property(lambda x: isinstance(x, int) and 0 <= x <= 150, "Age must be between 0 and 150")
+    def age(self): pass
+    
+    def __init__(self, name, age):
+        self.name = name
+        self.age = age
+
+# Test practical examples
+db1 = DatabaseConnection()
+db2 = DatabaseConnection()
+print(f"Singleton test - same instance: {db1 is db2}")
+
+try:
+    person = Person("Alice", 30)
+    print(f"Valid person created: {person.name}, {person.age}")
+    
+    person.age = 200  # This will raise an error
+except ValueError as e:
+    print(f"Validation error: {e}")
+
+# 15. SUMMARY AND BEST PRACTICES
+print("\n15. SUMMARY AND BEST PRACTICES:")
+print("="*35)
+
+print("\nPython Macro Equivalents Summary:")
+print("✓ Constants: Use UPPERCASE variables or typing.Final")
+print("✓ Simple functions: Use regular functions or lambdas")
+print("✓ Code generation: Use decorators or metaclasses")
+print("✓ String templates: Use string.Template or f-strings")
+print("✓ Validation: Use decorators with property validation")
+print("✓ Resource management: Use context managers")
+print("✓ Dynamic behavior: Use __call__, operator overloading")
+print("✓ Code transformation: Use AST manipulation (advanced)")
+
+print("\nBest Practices:")
+print("• Prefer simple functions over complex macro systems")
+print("• Use decorators for cross-cutting concerns")
+print("• Use context managers for resource management")
+print("• Keep macro-like code readable and debuggable")
+print("• Document macro behavior clearly")
+print("• Consider performance implications")
+print("• Use type hints for better IDE support")
+
+print("\nWhen to use each approach:")
+print("• Constants: Simple value substitution")
+print("• Functions: Reusable calculations or logic")
+print("• Decorators: Cross-cutting functionality (logging, timing, validation)")
+print("• Classes: Complex stateful macro behavior")
+print("• Templates: Code generation needs")
+print("• Metaclasses: Class-level transformations (advanced)")
+
+print(f"\n{'='*60}")
+print("Python provides flexible alternatives to C/C++ macros")
+print("while maintaining readability and debuggability!")
+print(f"{'='*60}")
 
 
