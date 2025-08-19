@@ -20,8 +20,11 @@ class UserInput:
                   input_chars.append(char)
             return ''.join(input_chars)
 
-
-n=UserInput().userInput()
+print("Please enter the amount (press Enter to finish):")
+n = int(UserInput().userInput())
 print(f"You entered: {n}")
-
-
+price_of_item_bought = int(UserInput().userInput())
+print(f"Price of item bought: {price_of_item_bought}")
+tax_rate = float(UserInput().userInput())
+print(f"Tax rate: {tax_rate}")
+print(n - (price_of_item_bought+(price_of_item_bought * (tax_rate)/100)))
