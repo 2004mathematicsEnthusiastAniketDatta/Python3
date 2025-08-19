@@ -38,6 +38,7 @@ import time
 import math
 import re
 from datetime import datetime, timedelta
+from string import Template
 
 print("🐍 REPL (Read-Eval-Print Loop) - Internal Understanding")
 print("="*60)
@@ -2938,7 +2939,950 @@ def unreliable_service():
 # List - Ordered Mutable collection of items
 #  this may contain multiple data types
 
+# STRING FORMATTING - COMPREHENSIVE GUIDE & POLYFILLS
+print("\n🔤 STRING FORMATTING - COMPREHENSIVE GUIDE & POLYFILLS")
+print("="*60)
 
+print("\n1. STRING FORMATTING EVOLUTION IN PYTHON")
+print("-" * 45)
+
+# Historical evolution of string formatting
+print("Python String Formatting Timeline:")
+print("• Python 1.x: % formatting (C-style)")
+print("• Python 2.6+: .format() method")
+print("• Python 3.6+: f-strings (formatted string literals)")
+print("• Python 3.8+: f-string = specifier for debugging")
+
+print("\n2. PERCENT (%) FORMATTING - LEGACY APPROACH")
+print("-" * 50)
+
+class PercentFormattingEngine:
+    """Polyfill implementation of % formatting"""
+    
+    def __init__(self):
+        self.format_specifiers = {
+            's': str,      # String
+            'd': int,      # Decimal integer
+            'f': float,    # Floating point
+            'x': lambda x: hex(int(x))[2:],  # Hexadecimal
+            'o': lambda x: oct(int(x))[2:],  # Octal
+            'c': chr,      # Character
+            'r': repr,     # Representation
+        }
+    
+    def format_percent(self, template: str, *args, **kwargs):
+        """Custom implementation of % formatting"""
+        result = ""
+        i = 0
+        arg_index = 0
+        
+        while i < len(template):
+            if template[i] == '%':
+                if i + 1 < len(template):
+                    if template[i + 1] == '%':
+                        result += '%'
+                        i += 2
+                        continue
+                    
+                    # Parse format specifier
+                    format_spec = ""
+                    j = i + 1
+                    
+                    # Skip flags, width, precision
+                    while j < len(template) and template[j] in '-+ #0123456789.':
+                        format_spec += template[j]
+                        j += 1
+                    
+                    if j < len(template):
+                        conversion = template[j]
+                        
+                        if conversion in self.format_specifiers:
+                            if arg_index < len(args):
+                                converter = self.format_specifiers[conversion]
+                                formatted_value = converter(args[arg_index])
+                                result += str(formatted_value)
+                                arg_index += 1
+                            else:
+                                result += f"%{format_spec}{conversion}"
+                        else:
+                            result += f"%{format_spec}{conversion}"
+                        
+                        i = j + 1
+                    else:
+                        result += template[i]
+                        i += 1
+                else:
+                    result += template[i]
+                    i += 1
+            else:
+                result += template[i]
+                i += 1
+        
+        return result
+
+# Demonstrate % formatting
+percent_engine = PercentFormattingEngine()
+
+print("% Formatting Examples:")
+name = "Alice"
+age = 30
+height = 5.6
+
+# Traditional % formatting
+print(f"Traditional: 'Hello %s, you are %d years old' % (name, age) = {'Hello %s, you are %d years old' % (name, age)}")
+print(f"With float: 'Height: %.2f feet' % height = {'Height: %.2f feet' % height}")
+
+# Custom polyfill
+custom_result = percent_engine.format_percent("Hello %s, you are %d years old", name, age)
+print(f"Custom polyfill: {custom_result}")
+
+print("\n% Formatting Limitations:")
+print("• Fixed positional arguments")
+print("• No named parameters")
+print("• Limited format options")
+print("• Error-prone with complex data")
+
+print("\n3. .format() METHOD - MODERN APPROACH")
+print("-" * 45)
+
+class FormatMethodEngine:
+    """Polyfill implementation of .format() method"""
+    
+    def __init__(self):
+        self.conversion_types = {
+            's': str,
+            'r': repr,
+            'a': ascii
+        }
+        self.format_types = {
+            'd': self._format_decimal,
+            'f': self._format_float,
+            'e': self._format_exponential,
+            'x': self._format_hex,
+            'o': self._format_octal,
+            'b': self._format_binary,
+            'c': self._format_char,
+            '%': self._format_percent
+        }
+    
+    def custom_format(self, template: str, *args, **kwargs):
+        """Custom implementation of .format() method"""
+        result = ""
+        i = 0
+        
+        while i < len(template):
+            if template[i] == '{':
+                # Find matching closing brace
+                brace_count = 1
+                j = i + 1
+                format_spec = ""
+                
+                while j < len(template) and brace_count > 0:
+                    if template[j] == '{':
+                        brace_count += 1
+                    elif template[j] == '}':
+                        brace_count -= 1
+                    
+                    if brace_count > 0:
+                        format_spec += template[j]
+                    
+                    j += 1
+                
+                if brace_count == 0:
+                    # Parse the format specification
+                    formatted_value = self._parse_format_spec(format_spec, args, kwargs)
+                    result += formatted_value
+                    i = j
+                else:
+                    result += template[i]
+                    i += 1
+            elif template[i] == '}':
+                if i + 1 < len(template) and template[i + 1] == '}':
+                    result += '}'
+                    i += 2
+                else:
+                    result += template[i]
+                    i += 1
+            else:
+                result += template[i]
+                i += 1
+        
+        return result
+    
+    def _parse_format_spec(self, spec: str, args: tuple, kwargs: dict):
+        """Parse format specification"""
+        if not spec:
+            if args:
+                return str(args[0])
+            return ""
+        
+        # Split field name and format spec
+        parts = spec.split(':')
+        field_name = parts[0]
+        format_spec = parts[1] if len(parts) > 1 else ""
+        
+        # Get the value
+        value = self._get_field_value(field_name, args, kwargs)
+        
+        # Apply formatting
+        return self._apply_format_spec(value, format_spec)
+    
+    def _get_field_value(self, field_name: str, args: tuple, kwargs: dict):
+        """Get value from field name"""
+        if not field_name:
+            return args[0] if args else ""
+        
+        if field_name.isdigit():
+            index = int(field_name)
+            return args[index] if index < len(args) else ""
+        
+        return kwargs.get(field_name, "")
+    
+    def _apply_format_spec(self, value, format_spec: str):
+        """Apply format specification to value"""
+        if not format_spec:
+            return str(value)
+        
+        # Parse format spec components
+        fill = ' '
+        align = '<'
+        sign = ''
+        alternate = False
+        zero_pad = False
+        width = 0
+        precision = None
+        format_type = 's'
+        
+        i = 0
+        
+        # Parse fill and align
+        if len(format_spec) > 1 and format_spec[1] in '<>=^':
+            fill = format_spec[0]
+            align = format_spec[1]
+            i = 2
+        elif format_spec and format_spec[0] in '<>=^':
+            align = format_spec[0]
+            i = 1
+        
+        # Parse remaining components
+        while i < len(format_spec):
+            char = format_spec[i]
+            if char in '+-':
+                sign = char
+            elif char == '#':
+                alternate = True
+            elif char == '0':
+                zero_pad = True
+            elif char.isdigit():
+                # Parse width
+                width_str = ""
+                while i < len(format_spec) and format_spec[i].isdigit():
+                    width_str += format_spec[i]
+                    i += 1
+                width = int(width_str) if width_str else 0
+                i -= 1
+            elif char == '.':
+                # Parse precision
+                i += 1
+                precision_str = ""
+                while i < len(format_spec) and format_spec[i].isdigit():
+                    precision_str += format_spec[i]
+                    i += 1
+                precision = int(precision_str) if precision_str else 0
+                i -= 1
+            elif char in 'dfeExXobcrs%':
+                format_type = char
+            
+            i += 1
+        
+        # Apply formatting
+        if format_type in self.format_types:
+            formatted = self.format_types[format_type](value, precision, alternate, sign)
+        else:
+            formatted = str(value)
+        
+        # Apply width and alignment
+        if width > len(formatted):
+            if align == '<':
+                formatted = formatted.ljust(width, fill)
+            elif align == '>':
+                formatted = formatted.rjust(width, fill)
+            elif align == '^':
+                formatted = formatted.center(width, fill)
+            elif align == '=':
+                # Pad after sign
+                if formatted and formatted[0] in '+-':
+                    formatted = formatted[0] + formatted[1:].rjust(width - 1, fill)
+                else:
+                    formatted = formatted.rjust(width, fill)
+        
+        return formatted
+    
+    def _format_decimal(self, value, precision, alternate, sign):
+        """Format as decimal integer"""
+        return str(int(value))
+    
+    def _format_float(self, value, precision, alternate, sign):
+        """Format as floating point"""
+        if precision is not None:
+            return f"{float(value):.{precision}f}"
+        return str(float(value))
+    
+    def _format_exponential(self, value, precision, alternate, sign):
+        """Format in exponential notation"""
+        if precision is not None:
+            return f"{float(value):.{precision}e}"
+        return f"{float(value):e}"
+    
+    def _format_hex(self, value, precision, alternate, sign):
+        """Format as hexadecimal"""
+        result = hex(int(value))[2:]
+        if alternate:
+            result = "0x" + result
+        return result
+    
+    def _format_octal(self, value, precision, alternate, sign):
+        """Format as octal"""
+        result = oct(int(value))[2:]
+        if alternate:
+            result = "0o" + result
+        return result
+    
+    def _format_binary(self, value, precision, alternate, sign):
+        """Format as binary"""
+        result = bin(int(value))[2:]
+        if alternate:
+            result = "0b" + result
+        return result
+    
+    def _format_char(self, value, precision, alternate, sign):
+        """Format as character"""
+        return chr(int(value))
+    
+    def _format_percent(self, value, precision, alternate, sign):
+        """Format as percentage"""
+        percent_value = float(value) * 100
+        if precision is not None:
+            return f"{percent_value:.{precision}f}%"
+        return f"{percent_value}%"
+
+# Demonstrate .format() method
+format_engine = FormatMethodEngine()
+
+print(".format() Method Examples:")
+template = "Hello {0}, you are {1} years old and {height:.2f} feet tall"
+formatted_traditional = template.format("Bob", 25, height=5.9)
+print(f"Traditional: {formatted_traditional}")
+
+custom_formatted = format_engine.custom_format("Hello {0}, you are {1} years old", "Bob", 25)
+print(f"Custom polyfill: {custom_formatted}")
+
+print("\nAdvanced .format() features:")
+print("• Positional and keyword arguments")
+print("• Format specifications (width, precision, alignment)")
+print("• Nested field access")
+print("• Custom format types")
+
+print("\n4. F-STRINGS - MODERN PYTHON (3.6+)")
+print("-" * 40)
+
+class FStringEngine:
+    """Polyfill implementation of f-string functionality"""
+    
+    def __init__(self):
+        self.globals_dict = {}
+        self.locals_dict = {}
+    
+    def set_context(self, globals_dict: dict, locals_dict: dict):
+        """Set the execution context for variable resolution"""
+        self.globals_dict = globals_dict
+        self.locals_dict = locals_dict
+    
+    def parse_fstring(self, template: str):
+        """Parse f-string template and return formatted result"""
+        result = ""
+        i = 0
+        
+        while i < len(template):
+            if template[i] == '{':
+                if i + 1 < len(template) and template[i + 1] == '{':
+                    result += '{'
+                    i += 2
+                    continue
+                
+                # Find the matching closing brace
+                brace_count = 1
+                j = i + 1
+                expression = ""
+                
+                while j < len(template) and brace_count > 0:
+                    if template[j] == '{':
+                        brace_count += 1
+                    elif template[j] == '}':
+                        brace_count -= 1
+                    
+                    if brace_count > 0:
+                        expression += template[j]
+                    
+                    j += 1
+                
+                if brace_count == 0:
+                    # Evaluate the expression
+                    formatted_value = self._evaluate_expression(expression)
+                    result += formatted_value
+                    i = j
+                else:
+                    result += template[i]
+                    i += 1
+            
+            elif template[i] == '}':
+                if i + 1 < len(template) and template[i + 1] == '}':
+                    result += '}'
+                    i += 2
+                else:
+                    result += template[i]
+                    i += 1
+            else:
+                result += template[i]
+                i += 1
+        
+        return result
+    
+    def _evaluate_expression(self, expression: str):
+        """Evaluate expression within f-string context"""
+        try:
+            # Split expression and format spec
+            if ':' in expression:
+                expr_part, format_spec = expression.split(':', 1)
+            else:
+                expr_part = expression
+                format_spec = ""
+            
+            # Handle = specifier (Python 3.8+)
+            debug_mode = False
+            if expr_part.endswith('='):
+                debug_mode = True
+                expr_part = expr_part[:-1]
+            
+            # Evaluate the expression
+            try:
+                value = eval(expr_part, self.globals_dict, self.locals_dict)
+            except:
+                return f"{{EVALUATION_ERROR: {expr_part}}}"
+            
+            # Apply format specification
+            if format_spec:
+                formatted_value = format(value, format_spec)
+            else:
+                formatted_value = str(value)
+            
+            # Handle debug mode
+            if debug_mode:
+                return f"{expr_part}={formatted_value}"
+            
+            return formatted_value
+        
+        except Exception as e:
+            return f"{{ERROR: {str(e)}}}"
+
+# Demonstrate f-string functionality
+f_engine = FStringEngine()
+
+# Set up context
+context_vars = {
+    'name': 'Charlie',
+    'age': 35,
+    'pi': 3.14159,
+    'items': ['apple', 'banana', 'cherry']
+}
+
+f_engine.set_context(globals(), context_vars)
+
+print("F-String Examples:")
+
+# Real f-strings
+name = "Charlie"
+age = 35
+pi = 3.14159
+print(f"Real f-string: Hello {name}, you are {age} years old")
+print(f"With formatting: Pi is approximately {pi:.2f}")
+
+# Custom f-string engine
+custom_result1 = f_engine.parse_fstring("Hello {name}, you are {age} years old")
+custom_result2 = f_engine.parse_fstring("Pi is approximately {pi:.2f}")
+print(f"Custom f-string 1: {custom_result1}")
+print(f"Custom f-string 2: {custom_result2}")
+
+# Debug mode (Python 3.8+)
+debug_example = f_engine.parse_fstring("Debug: {name=}, {age=}")
+print(f"Debug mode: {debug_example}")
+
+print("\nF-String advantages:")
+print("• More readable and concise")
+print("• Better performance")
+print("• Expression evaluation")
+print("• Debug support (3.8+)")
+print("• Format specifications")
+
+print("\n5. ADVANCED STRING FORMATTING TECHNIQUES")
+print("-" * 50)
+
+class AdvancedStringFormatter:
+    """Advanced string formatting utilities"""
+    
+    def __init__(self):
+        self.custom_formatters = {}
+    
+    def register_formatter(self, type_name: str, formatter_func):
+        """Register custom formatter for specific type"""
+        self.custom_formatters[type_name] = formatter_func
+    
+    def format_table(self, headers: list, rows: list, alignment: str = 'left') -> str:
+        """Format data as ASCII table"""
+        if not headers or not rows:
+            return ""
+        
+        # Calculate column widths
+        col_widths = []
+        for i, header in enumerate(headers):
+            max_width = len(str(header))
+            for row in rows:
+                if i < len(row):
+                    max_width = max(max_width, len(str(row[i])))
+            col_widths.append(max_width)
+        
+        # Format header
+        separator = "+" + "+".join("-" * (width + 2) for width in col_widths) + "+"
+        
+        header_row = "|"
+        for i, header in enumerate(headers):
+            if alignment == 'center':
+                formatted_header = f" {str(header).center(col_widths[i])} "
+            elif alignment == 'right':
+                formatted_header = f" {str(header).rjust(col_widths[i])} "
+            else:
+                formatted_header = f" {str(header).ljust(col_widths[i])} "
+            header_row += formatted_header + "|"
+        
+        # Format data rows
+        data_rows = []
+        for row in rows:
+            row_str = "|"
+            for i in range(len(headers)):
+                cell_value = str(row[i]) if i < len(row) else ""
+                if alignment == 'center':
+                    formatted_cell = f" {cell_value.center(col_widths[i])} "
+                elif alignment == 'right':
+                    formatted_cell = f" {cell_value.rjust(col_widths[i])} "
+                else:
+                    formatted_cell = f" {cell_value.ljust(col_widths[i])} "
+                row_str += formatted_cell + "|"
+            data_rows.append(row_str)
+        
+        # Combine all parts
+        table = [separator, header_row, separator] + data_rows + [separator]
+        return "\n".join(table)
+    
+    def format_json_pretty(self, data: dict, indent: int = 2) -> str:
+        """Format dictionary as pretty JSON-like string"""
+        return self._format_json_recursive(data, 0, indent)
+    
+    def _format_json_recursive(self, obj, current_indent: int, indent_size: int) -> str:
+        """Recursively format JSON-like structure"""
+        spaces = " " * current_indent
+        
+        if isinstance(obj, dict):
+            if not obj:
+                return "{}"
+            
+            lines = ["{"]
+            items = list(obj.items())
+            for i, (key, value) in enumerate(items):
+                value_str = self._format_json_recursive(value, current_indent + indent_size, indent_size)
+                comma = "," if i < len(items) - 1 else ""
+                lines.append(f"{spaces}{' ' * indent_size}\"{key}\": {value_str}{comma}")
+            lines.append(f"{spaces}}}")
+            return "\n".join(lines)
+        
+        elif isinstance(obj, list):
+            if not obj:
+                return "[]"
+            
+            lines = ["["]
+            for i, item in enumerate(obj):
+                item_str = self._format_json_recursive(item, current_indent + indent_size, indent_size)
+                comma = "," if i < len(obj) - 1 else ""
+                lines.append(f"{spaces}{' ' * indent_size}{item_str}{comma}")
+            lines.append(f"{spaces}]")
+            return "\n".join(lines)
+        
+        elif isinstance(obj, str):
+            return f'"{obj}"'
+        
+        else:
+            return str(obj)
+    
+    def format_money(self, amount: float, currency: str = "USD") -> str:
+        """Format monetary amount"""
+        currency_symbols = {
+            "USD": "$",
+            "EUR": "€",
+            "GBP": "£",
+            "JPY": "¥"
+        }
+        
+        symbol = currency_symbols.get(currency, currency)
+        
+        if currency == "JPY":
+            return f"{symbol}{amount:,.0f}"
+        else:
+            return f"{symbol}{amount:,.2f}"
+    
+    def format_file_size(self, size_bytes: int) -> str:
+        """Format file size in human-readable format"""
+        units = ['B', 'KB', 'MB', 'GB', 'TB', 'PB']
+        size = float(size_bytes)
+        unit_index = 0
+        
+        while size >= 1024 and unit_index < len(units) - 1:
+            size /= 1024
+            unit_index += 1
+        
+        if unit_index == 0:
+            return f"{int(size)} {units[unit_index]}"
+        else:
+            return f"{size:.2f} {units[unit_index]}"
+    
+    def format_duration(self, seconds: int) -> str:
+        """Format duration in human-readable format"""
+        if seconds < 60:
+            return f"{seconds}s"
+        elif seconds < 3600:
+            minutes = seconds // 60
+            remaining_seconds = seconds % 60
+            if remaining_seconds > 0:
+                return f"{minutes}m {remaining_seconds}s"
+            return f"{minutes}m"
+        elif seconds < 86400:
+            hours = seconds // 3600
+            remaining_minutes = (seconds % 3600) // 60
+            if remaining_minutes > 0:
+                return f"{hours}h {remaining_minutes}m"
+            return f"{hours}h"
+        else:
+            days = seconds // 86400
+            remaining_hours = (seconds % 86400) // 3600
+            if remaining_hours > 0:
+                return f"{days}d {remaining_hours}h"
+            return f"{days}d"
+
+# Demonstrate advanced formatting
+advanced_formatter = AdvancedStringFormatter()
+
+print("Advanced Formatting Examples:")
+
+# Table formatting
+headers = ["Name", "Age", "Salary", "Department"]
+data = [
+    ["Alice Johnson", 28, 75000, "Engineering"],
+    ["Bob Smith", 35, 85000, "Marketing"],
+    ["Charlie Brown", 42, 95000, "Sales"]
+]
+
+table = advanced_formatter.format_table(headers, data, alignment='left')
+print("Employee Table:")
+print(table)
+
+# JSON-like formatting
+sample_data = {
+    "user": {
+        "name": "John Doe",
+        "age": 30,
+        "skills": ["Python", "JavaScript", "SQL"],
+        "address": {
+            "city": "New York",
+            "country": "USA"
+        }
+    },
+    "active": True
+}
+
+json_formatted = advanced_formatter.format_json_pretty(sample_data)
+print("\nJSON-like formatting:")
+print(json_formatted)
+
+# Money formatting
+amounts = [1234.56, 1000000, 0.99]
+for amount in amounts:
+    usd = advanced_formatter.format_money(amount, "USD")
+    eur = advanced_formatter.format_money(amount, "EUR")
+    jpy = advanced_formatter.format_money(amount, "JPY")
+    print(f"Amount {amount}: {usd} | {eur} | {jpy}")
+
+# File size formatting
+file_sizes = [1024, 1048576, 1073741824, 1099511627776]
+print("\nFile sizes:")
+for size in file_sizes:
+    formatted = advanced_formatter.format_file_size(size)
+    print(f"{size} bytes = {formatted}")
+
+# Duration formatting
+durations = [45, 125, 3661, 90061]
+print("\nDurations:")
+for duration in durations:
+    formatted = advanced_formatter.format_duration(duration)
+    print(f"{duration} seconds = {formatted}")
+
+print("\n6. STRING FORMATTING PERFORMANCE COMPARISON")
+print("-" * 50)
+
+
+class FormattingBenchmark:
+    """Benchmark different string formatting methods"""
+    
+    def __init__(self):
+        self.iterations = 100000
+    
+    def benchmark_percent_formatting(self):
+        """Benchmark % formatting"""
+        start_time = time.time()
+        for i in range(self.iterations):
+            result = "Hello %s, iteration %d" % ("World", i)
+        end_time = time.time()
+        return end_time - start_time
+    
+    def benchmark_format_method(self):
+        """Benchmark .format() method"""
+        start_time = time.time()
+        for i in range(self.iterations):
+            result = "Hello {}, iteration {}".format("World", i)
+        end_time = time.time()
+        return end_time - start_time
+    
+    def benchmark_f_strings(self):
+        """Benchmark f-strings"""
+        start_time = time.time()
+        name = "World"
+        for i in range(self.iterations):
+            result = f"Hello {name}, iteration {i}"
+        end_time = time.time()
+        return end_time - start_time
+    
+    def run_benchmark(self):
+        """Run complete benchmark suite"""
+        print(f"Running benchmark with {self.iterations:,} iterations...")
+        
+        percent_time = self.benchmark_percent_formatting()
+        format_time = self.benchmark_format_method()
+        fstring_time = self.benchmark_f_strings()
+        
+        print(f"% formatting: {percent_time:.4f} seconds")
+        print(f".format() method: {format_time:.4f} seconds")
+        print(f"f-strings: {fstring_time:.4f} seconds")
+        
+        # Calculate relative performance
+        fastest = min(percent_time, format_time, fstring_time)
+        print(f"\nRelative performance (lower is better):")
+        print(f"% formatting: {percent_time/fastest:.2f}x")
+        print(f".format() method: {format_time/fastest:.2f}x")
+        print(f"f-strings: {fstring_time/fastest:.2f}x")
+
+# Run performance benchmark (commented out to avoid long execution)
+# benchmark = FormattingBenchmark()
+# benchmark.run_benchmark()
+
+print("\nPerformance Summary (typical results):")
+print("• f-strings: Fastest (1.0x baseline)")
+print("• % formatting: ~1.2x slower")
+print("• .format() method: ~1.5x slower")
+
+print("\n7. REAL-WORLD STRING FORMATTING APPLICATIONS")
+print("-" * 55)
+
+class ProductionStringFormatter:
+    """Production-ready string formatting utilities"""
+    
+    def __init__(self):
+        self.templates = {}
+    
+    def register_template(self, name: str, template: str):
+        """Register reusable template"""
+        self.templates[name] = template
+    
+    def format_log_message(self, level: str, message: str, **context) -> str:
+        """Format structured log message"""
+        timestamp = datetime.now().isoformat()
+        
+        # Build context string
+        context_parts = []
+        for key, value in context.items():
+            context_parts.append(f"{key}={value}")
+        context_str = " ".join(context_parts)
+        
+        if context_str:
+            return f"[{timestamp}] {level.upper()}: {message} | {context_str}"
+        else:
+            return f"[{timestamp}] {level.upper()}: {message}"
+    
+    def format_api_response(self, status: str, data: dict, message: str = None) -> str:
+        """Format JSON API response"""
+        response = {
+            "status": status,
+            "timestamp": datetime.now().isoformat(),
+            "data": data
+        }
+        
+        if message:
+            response["message"] = message
+        
+        return json.dumps(response, indent=2, default=str)
+    
+    def format_email_template(self, template_name: str, **variables) -> str:
+        """Format email template with variables"""
+        if template_name not in self.templates:
+            return f"Template '{template_name}' not found"
+        
+        template = self.templates[template_name]
+        
+        # Use safe string template substitution
+        try:
+            tmpl = Template(template)
+            return tmpl.safe_substitute(**variables)
+        except:
+            # Fallback to f-string style
+            for key, value in variables.items():
+                template = template.replace(f"{{{key}}}", str(value))
+            return template
+    
+    def format_sql_query(self, query_template: str, **params) -> str:
+        """Format SQL query with parameters (safe approach)"""
+        # This is a simplified example - use proper SQL parameter binding in production
+        formatted_params = {}
+        for key, value in params.items():
+            if isinstance(value, str):
+                formatted_params[key] = f"'{value.replace('\'', '\'\'')}'"  # Basic SQL escaping
+            elif value is None:
+                formatted_params[key] = "NULL"
+            else:
+                formatted_params[key] = str(value)
+        
+        return query_template.format(**formatted_params)
+    
+    def format_report_header(self, title: str, width: int = 80) -> str:
+        """Format report header with borders"""
+        border = "=" * width
+        padding = (width - len(title) - 2) // 2
+        header_line = f"|{' ' * padding}{title}{' ' * (width - len(title) - padding - 2)}|"
+        
+        return f"{border}\n{header_line}\n{border}"
+
+# Demonstrate production formatting
+prod_formatter = ProductionStringFormatter()
+
+# Register email templates
+prod_formatter.register_template("welcome", """
+Welcome to our service, {name}!
+
+Your account has been created with email: {email}
+Account ID: {account_id}
+
+Best regards,
+The Team
+""")
+
+prod_formatter.register_template("order_confirmation", """
+Order Confirmation #{order_id}
+
+Dear {customer_name},
+
+Thank you for your order! Here are the details:
+- Total Amount: {total}
+- Estimated Delivery: {delivery_date}
+- Tracking Number: {tracking_number}
+
+Order Details:
+{order_items}
+""")
+
+print("Production String Formatting Examples:")
+
+# Log message formatting
+log_msg = prod_formatter.format_log_message(
+    "error", 
+    "Database connection failed",
+    user_id="123",
+    attempt=3,
+    timeout=30
+)
+print("Log message:")
+print(log_msg)
+
+# API response formatting
+api_response = prod_formatter.format_api_response(
+    "success",
+    {"users": [{"id": 1, "name": "Alice"}, {"id": 2, "name": "Bob"}]},
+    "Users retrieved successfully"
+)
+print("\nAPI Response:")
+print(api_response)
+
+# Email template formatting
+welcome_email = prod_formatter.format_email_template(
+    "welcome",
+    name="John Doe",
+    email="john@example.com",
+    account_id="ACC123456"
+)
+print("\nWelcome Email:")
+print(welcome_email)
+
+# Report header formatting
+report_header = prod_formatter.format_report_header("Monthly Sales Report", 60)
+print(f"\nReport Header:")
+print(report_header)
+
+print("\n8. STRING FORMATTING BEST PRACTICES")
+print("-" * 45)
+
+best_practices = [
+    "✓ Use f-strings for simple variable substitution (Python 3.6+)",
+    "✓ Use .format() for complex formatting or Python < 3.6",
+    "✓ Avoid % formatting except for legacy compatibility",
+    "✓ Use format specifications for consistent number formatting",
+    "✓ Cache compiled templates for repeated use",
+    "✓ Validate input data before formatting",
+    "✓ Use string.Template for user-provided templates",
+    "✓ Escape user input in SQL/HTML contexts",
+    "✓ Consider internationalization (i18n) requirements",
+    "✓ Profile performance for high-frequency formatting"
+]
+
+print("String Formatting Best Practices:")
+for practice in best_practices:
+    print(practice)
+
+print("\n9. COMMON PITFALLS AND SOLUTIONS")
+print("-" * 40)
+
+pitfalls = [
+    ("SQL Injection", "Use parameterized queries, not string formatting"),
+    ("Unicode Issues", "Ensure consistent encoding (UTF-8)"),
+    ("Performance", "Cache templates, use f-strings for speed"),
+    ("Type Errors", "Validate input types before formatting"),
+    ("Memory Usage", "Avoid creating unnecessary intermediate strings"),
+    ("Security", "Sanitize user input in templates"),
+    ("Maintenance", "Use constants for format strings"),
+    ("Testing", "Test edge cases (empty, None, special chars)")
+]
+
+print("Common Pitfalls and Solutions:")
+for pitfall, solution in pitfalls:
+    print(f"• {pitfall}: {solution}")
+
+print("\n" + "="*60)
+print("STRING FORMATTING MASTERY COMPLETE!")
+print("From % to f-strings, polyfills to production patterns.")
+print("="*60)
 
 
 
