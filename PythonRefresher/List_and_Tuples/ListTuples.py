@@ -83,7 +83,7 @@ p1 = Point(1, 2, 3)
 print(f"Named tuple: {p1}, x-coordinate: {p1.x}")
 
 # ============================================================================
-# DEEP DIVE: LISTS - DYNAMIC ARRAYS
+#  LISTS - DYNAMIC ARRAYS
 # ============================================================================
 
 print("\n=== LIST INTERNALS ===")
@@ -223,7 +223,7 @@ print("Tuples: Immutable, hashable, memory efficient, faster creation")
 print("Lists: Mutable, dynamic, rich methods, flexible but more overhead")
 
 # ============================================================================
-# DEEP DIVE: NUMPY ARRAYS - HIGH-PERFORMANCE COMPUTING
+# DIVE: NUMPY ARRAYS - HIGH-PERFORMANCE COMPUTING
 # ============================================================================
 
 
